@@ -69,12 +69,44 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database - SQLite para desarrollo, PostgreSQL para producción
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Usar DIRECT_URL para migraciones, DATABASE_URL para operaciones normales
+DIRECT_URL = config('DIRECT_URL', default=None)
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+# Priorizar DIRECT_URL si existe (mejor para migraciones)
+db_url_string = DIRECT_URL or DATABASE_URL
+
+if db_url_string:
+    # Parsear la URL de la base de datos de Supabase
+    from urllib.parse import urlparse
+    db_url = urlparse(db_url_string)
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db_url.path[1:],  # Remover el '/' inicial
+            'USER': db_url.username,
+            'PASSWORD': db_url.password,
+            'HOST': db_url.hostname,
+            'PORT': db_url.port or 5432,
+            'OPTIONS': {
+                'sslmode': 'require',  # Supabase requiere SSL
+            }
+        },
+        # Mantener SQLite disponible para migración de datos
+        'sqlite': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    # SQLite para desarrollo local
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
