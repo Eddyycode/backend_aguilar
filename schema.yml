@@ -1,0 +1,2057 @@
+openapi: 3.0.3
+info:
+  title: API de Mantenimiento Vehicular
+  version: 1.0.0
+  description: "\n    API REST completa para gestión de vehículos, mantenimientos
+    y talleres mecánicos.\n\n    ## Características principales:\n\n    * **Gestión
+    de Vehículos**: CRUD completo con filtros avanzados\n    * **Talleres Mecánicos**:
+    Búsqueda por ubicación con geolocalización\n    * **Mantenimientos**: Control
+    de preventivos y correctivos con historial\n    * **AWS Location Service**: Integración
+    para mapas y geocodificación\n    * **Filtros de Fecha**: Todos los endpoints
+    de estadísticas soportan filtros por rango de fechas\n\n    ## Filtros de fecha
+    disponibles:\n\n    Los siguientes endpoints aceptan parámetros `fecha_desde`
+    y `fecha_hasta` (formato: YYYY-MM-DD):\n\n    * `/api/mantenimientos/estadisticas/`
+    - Estadísticas filtradas por fecha\n    * `/api/vehiculos/estadisticas/` - Estadísticas
+    de vehículos por fecha de registro\n    * `/api/vehiculos/{id}/mantenimientos/`
+    - Mantenimientos de un vehículo\n    * `/api/talleres/{id}/mantenimientos/` -
+    Mantenimientos de un taller\n\n    ## Base URL:\n    * Desarrollo: `http://127.0.0.1:8000/api/`\n
+    \   * Producción: (configurar según tu dominio)\n    "
+  contact:
+    name: Equipo de Desarrollo
+    email: dev@mantenimiento-vehicular.com
+  license:
+    name: MIT License
+paths:
+  /api/aws-maps/buscar-lugares/:
+    get:
+      operationId: aws_maps_buscar_lugares_retrieve
+      description: |-
+        API View para buscar lugares usando AWS Location Service
+
+        GET /api/aws-maps/buscar-lugares/?texto=taller&latitud=17.9892&longitud=-92.9475
+      tags:
+      - aws-maps
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/aws-maps/buscar-talleres/:
+    get:
+      operationId: aws_maps_buscar_talleres_retrieve
+      description: |-
+        API View para buscar talleres mecánicos usando AWS Location Service
+
+        GET /api/aws-maps/buscar-talleres/?latitud=17.9892&longitud=-92.9475&radio=10
+      tags:
+      - aws-maps
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/aws-maps/calcular-ruta/:
+    post:
+      operationId: aws_maps_calcular_ruta_create
+      description: |-
+        API View para calcular rutas entre dos puntos
+
+        POST /api/aws-maps/calcular-ruta/
+        Body: {
+            "origen_lat": 18.0,
+            "origen_lon": -92.9,
+            "destino_lat": 19.4,
+            "destino_lon": -99.1,
+            "modo_viaje": "Car",  # Opcional: Car, Truck, Walking
+            "optimizar_para": "FastestRoute"  # Opcional: FastestRoute, ShortestRoute
+        }
+      tags:
+      - aws-maps
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/aws-maps/geocodificar/:
+    get:
+      operationId: aws_maps_geocodificar_retrieve
+      description: |-
+        API View para geocodificar direcciones (dirección → coordenadas)
+
+        GET /api/aws-maps/geocodificar/?direccion=Av Universidad 2000, Villahermosa
+      tags:
+      - aws-maps
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/aws-maps/geocodificar-inverso/:
+    get:
+      operationId: aws_maps_geocodificar_inverso_retrieve
+      description: |-
+        API View para geocodificación inversa (coordenadas → dirección)
+
+        GET /api/aws-maps/geocodificar-inverso/?latitud=17.9892&longitud=-92.9475
+      tags:
+      - aws-maps
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/aws-maps/validar-configuracion/:
+    get:
+      operationId: aws_maps_validar_configuracion_retrieve
+      description: |-
+        API View para validar la configuración de AWS Location Service
+
+        GET /api/aws-maps/validar-configuracion/
+      tags:
+      - aws-maps
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/mantenimientos/:
+    get:
+      operationId: mantenimientos_list
+      description: ViewSet para manejar operaciones CRUD de Mantenimientos
+      parameters:
+      - in: query
+        name: estado
+        schema:
+          type: string
+          enum:
+          - CANCELADO
+          - COMPLETADO
+          - EN_PROCESO
+          - PENDIENTE
+        description: |-
+          * `PENDIENTE` - Pendiente
+          * `EN_PROCESO` - En Proceso
+          * `COMPLETADO` - Completado
+          * `CANCELADO` - Cancelado
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: taller
+        schema:
+          type: integer
+      - in: query
+        name: tipo
+        schema:
+          type: string
+          enum:
+          - CORRECTIVO
+          - PREVENTIVO
+          - REPARACION
+          - REVISION
+        description: |-
+          * `PREVENTIVO` - Mantenimiento Preventivo
+          * `CORRECTIVO` - Mantenimiento Correctivo
+          * `REVISION` - Revisión General
+          * `REPARACION` - Reparación
+      - in: query
+        name: vehiculo
+        schema:
+          type: integer
+      tags:
+      - mantenimientos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMantenimientoListList'
+          description: ''
+    post:
+      operationId: mantenimientos_create
+      description: ViewSet para manejar operaciones CRUD de Mantenimientos
+      tags:
+      - mantenimientos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MantenimientoCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MantenimientoCreate'
+          description: ''
+  /api/mantenimientos/{id}/:
+    get:
+      operationId: mantenimientos_retrieve
+      description: ViewSet para manejar operaciones CRUD de Mantenimientos
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Mantenimiento.
+        required: true
+      tags:
+      - mantenimientos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mantenimiento'
+          description: ''
+    put:
+      operationId: mantenimientos_update
+      description: ViewSet para manejar operaciones CRUD de Mantenimientos
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Mantenimiento.
+        required: true
+      tags:
+      - mantenimientos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MantenimientoRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mantenimiento'
+          description: ''
+    patch:
+      operationId: mantenimientos_partial_update
+      description: ViewSet para manejar operaciones CRUD de Mantenimientos
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Mantenimiento.
+        required: true
+      tags:
+      - mantenimientos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMantenimientoRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mantenimiento'
+          description: ''
+    delete:
+      operationId: mantenimientos_destroy
+      description: ViewSet para manejar operaciones CRUD de Mantenimientos
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Mantenimiento.
+        required: true
+      tags:
+      - mantenimientos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/mantenimientos/{id}/completar/:
+    post:
+      operationId: mantenimientos_completar_create
+      description: |-
+        Endpoint personalizado: POST /mantenimientos/{id}/completar/
+        Marca un mantenimiento como completado
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Mantenimiento.
+        required: true
+      tags:
+      - mantenimientos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MantenimientoRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mantenimiento'
+          description: ''
+  /api/mantenimientos/estadisticas/:
+    get:
+      operationId: mantenimientos_estadisticas_retrieve
+      description: |-
+        Endpoint personalizado: GET /mantenimientos/estadisticas/
+        Retorna estadísticas de mantenimientos
+        Parámetros opcionales:
+        - fecha_desde: Filtrar desde esta fecha (formato: YYYY-MM-DD)
+        - fecha_hasta: Filtrar hasta esta fecha (formato: YYYY-MM-DD)
+      tags:
+      - mantenimientos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mantenimiento'
+          description: ''
+  /api/mantenimientos/pendientes/:
+    get:
+      operationId: mantenimientos_pendientes_retrieve
+      description: |-
+        Endpoint personalizado: GET /mantenimientos/pendientes/
+        Retorna mantenimientos pendientes
+      tags:
+      - mantenimientos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mantenimiento'
+          description: ''
+  /api/mantenimientos/proximos/:
+    get:
+      operationId: mantenimientos_proximos_retrieve
+      description: |-
+        Endpoint personalizado: GET /mantenimientos/proximos/
+        Retorna próximos mantenimientos programados (siguiente semana)
+      tags:
+      - mantenimientos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mantenimiento'
+          description: ''
+  /api/talleres/:
+    get:
+      operationId: talleres_list
+      description: |-
+        ViewSet para manejar operaciones CRUD de Talleres Mecánicos
+
+        Incluye funcionalidad de búsqueda por ubicación
+      parameters:
+      - in: query
+        name: activo
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: verificado
+        schema:
+          type: boolean
+      tags:
+      - talleres
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTallerMecanicoListList'
+          description: ''
+    post:
+      operationId: talleres_create
+      description: |-
+        ViewSet para manejar operaciones CRUD de Talleres Mecánicos
+
+        Incluye funcionalidad de búsqueda por ubicación
+      tags:
+      - talleres
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TallerMecanicoRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TallerMecanico'
+          description: ''
+  /api/talleres/{id}/:
+    get:
+      operationId: talleres_retrieve
+      description: |-
+        ViewSet para manejar operaciones CRUD de Talleres Mecánicos
+
+        Incluye funcionalidad de búsqueda por ubicación
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Taller Mecánico.
+        required: true
+      tags:
+      - talleres
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TallerMecanico'
+          description: ''
+    put:
+      operationId: talleres_update
+      description: |-
+        ViewSet para manejar operaciones CRUD de Talleres Mecánicos
+
+        Incluye funcionalidad de búsqueda por ubicación
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Taller Mecánico.
+        required: true
+      tags:
+      - talleres
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TallerMecanicoRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TallerMecanico'
+          description: ''
+    patch:
+      operationId: talleres_partial_update
+      description: |-
+        ViewSet para manejar operaciones CRUD de Talleres Mecánicos
+
+        Incluye funcionalidad de búsqueda por ubicación
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Taller Mecánico.
+        required: true
+      tags:
+      - talleres
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTallerMecanicoRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TallerMecanico'
+          description: ''
+    delete:
+      operationId: talleres_destroy
+      description: |-
+        ViewSet para manejar operaciones CRUD de Talleres Mecánicos
+
+        Incluye funcionalidad de búsqueda por ubicación
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Taller Mecánico.
+        required: true
+      tags:
+      - talleres
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/talleres/{id}/mantenimientos/:
+    get:
+      operationId: talleres_mantenimientos_retrieve
+      description: |-
+        Endpoint personalizado: GET /talleres/{id}/mantenimientos/
+        Retorna todos los mantenimientos realizados en este taller
+        Parámetros opcionales:
+        - fecha_desde: Filtrar mantenimientos desde esta fecha (formato: YYYY-MM-DD)
+        - fecha_hasta: Filtrar mantenimientos hasta esta fecha (formato: YYYY-MM-DD)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Taller Mecánico.
+        required: true
+      tags:
+      - talleres
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TallerMecanico'
+          description: ''
+  /api/talleres/cercanos/:
+    get:
+      operationId: talleres_cercanos_retrieve
+      description: |-
+        Endpoint personalizado: GET /talleres/cercanos/?latitud=X&longitud=Y&radio=10
+        Retorna talleres cercanos a una ubicación
+      tags:
+      - talleres
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TallerMecanico'
+          description: ''
+  /api/vehiculos/:
+    get:
+      operationId: vehiculos_list
+      description: |-
+        ViewSet para manejar operaciones CRUD de Vehículos
+
+        Endpoints:
+        - GET /vehiculos/ - Listar todos los vehículos
+        - POST /vehiculos/ - Crear un vehículo
+        - GET /vehiculos/{id}/ - Obtener detalle de un vehículo
+        - PUT /vehiculos/{id}/ - Actualizar un vehículo
+        - PATCH /vehiculos/{id}/ - Actualizar parcialmente un vehículo
+        - DELETE /vehiculos/{id}/ - Eliminar un vehículo
+      parameters:
+      - in: query
+        name: activo
+        schema:
+          type: boolean
+      - in: query
+        name: marca
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: tipo
+        schema:
+          type: string
+          enum:
+          - AUTO
+          - CAMION
+          - CAMIONETA
+          - MOTO
+          - VAN
+        description: |-
+          * `AUTO` - Automóvil
+          * `MOTO` - Motocicleta
+          * `CAMIONETA` - Camioneta
+          * `CAMION` - Camión
+          * `VAN` - Van
+      tags:
+      - vehiculos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedVehiculoListList'
+          description: ''
+    post:
+      operationId: vehiculos_create
+      description: |-
+        ViewSet para manejar operaciones CRUD de Vehículos
+
+        Endpoints:
+        - GET /vehiculos/ - Listar todos los vehículos
+        - POST /vehiculos/ - Crear un vehículo
+        - GET /vehiculos/{id}/ - Obtener detalle de un vehículo
+        - PUT /vehiculos/{id}/ - Actualizar un vehículo
+        - PATCH /vehiculos/{id}/ - Actualizar parcialmente un vehículo
+        - DELETE /vehiculos/{id}/ - Eliminar un vehículo
+      tags:
+      - vehiculos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehiculoRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+  /api/vehiculos/{id}/:
+    get:
+      operationId: vehiculos_retrieve
+      description: |-
+        ViewSet para manejar operaciones CRUD de Vehículos
+
+        Endpoints:
+        - GET /vehiculos/ - Listar todos los vehículos
+        - POST /vehiculos/ - Crear un vehículo
+        - GET /vehiculos/{id}/ - Obtener detalle de un vehículo
+        - PUT /vehiculos/{id}/ - Actualizar un vehículo
+        - PATCH /vehiculos/{id}/ - Actualizar parcialmente un vehículo
+        - DELETE /vehiculos/{id}/ - Eliminar un vehículo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Vehículo.
+        required: true
+      tags:
+      - vehiculos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+    put:
+      operationId: vehiculos_update
+      description: |-
+        ViewSet para manejar operaciones CRUD de Vehículos
+
+        Endpoints:
+        - GET /vehiculos/ - Listar todos los vehículos
+        - POST /vehiculos/ - Crear un vehículo
+        - GET /vehiculos/{id}/ - Obtener detalle de un vehículo
+        - PUT /vehiculos/{id}/ - Actualizar un vehículo
+        - PATCH /vehiculos/{id}/ - Actualizar parcialmente un vehículo
+        - DELETE /vehiculos/{id}/ - Eliminar un vehículo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Vehículo.
+        required: true
+      tags:
+      - vehiculos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehiculoRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+    patch:
+      operationId: vehiculos_partial_update
+      description: |-
+        ViewSet para manejar operaciones CRUD de Vehículos
+
+        Endpoints:
+        - GET /vehiculos/ - Listar todos los vehículos
+        - POST /vehiculos/ - Crear un vehículo
+        - GET /vehiculos/{id}/ - Obtener detalle de un vehículo
+        - PUT /vehiculos/{id}/ - Actualizar un vehículo
+        - PATCH /vehiculos/{id}/ - Actualizar parcialmente un vehículo
+        - DELETE /vehiculos/{id}/ - Eliminar un vehículo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Vehículo.
+        required: true
+      tags:
+      - vehiculos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedVehiculoRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+    delete:
+      operationId: vehiculos_destroy
+      description: |-
+        ViewSet para manejar operaciones CRUD de Vehículos
+
+        Endpoints:
+        - GET /vehiculos/ - Listar todos los vehículos
+        - POST /vehiculos/ - Crear un vehículo
+        - GET /vehiculos/{id}/ - Obtener detalle de un vehículo
+        - PUT /vehiculos/{id}/ - Actualizar un vehículo
+        - PATCH /vehiculos/{id}/ - Actualizar parcialmente un vehículo
+        - DELETE /vehiculos/{id}/ - Eliminar un vehículo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Vehículo.
+        required: true
+      tags:
+      - vehiculos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/vehiculos/{id}/actualizar_kilometraje/:
+    post:
+      operationId: vehiculos_actualizar_kilometraje_create
+      description: |-
+        Endpoint personalizado: POST /vehiculos/{id}/actualizar_kilometraje/
+        Body: {"kilometraje": 50000}
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Vehículo.
+        required: true
+      tags:
+      - vehiculos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehiculoRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+  /api/vehiculos/{id}/mantenimientos/:
+    get:
+      operationId: vehiculos_mantenimientos_retrieve
+      description: |-
+        Endpoint personalizado: GET /vehiculos/{id}/mantenimientos/
+        Retorna todos los mantenimientos de un vehículo específico
+        Parámetros opcionales:
+        - fecha_desde: Filtrar mantenimientos desde esta fecha (formato: YYYY-MM-DD)
+        - fecha_hasta: Filtrar mantenimientos hasta esta fecha (formato: YYYY-MM-DD)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Vehículo.
+        required: true
+      tags:
+      - vehiculos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+  /api/vehiculos/estadisticas/:
+    get:
+      operationId: vehiculos_estadisticas_retrieve
+      description: |-
+        Endpoint personalizado: GET /vehiculos/estadisticas/
+        Retorna estadísticas generales de los vehículos
+        Parámetros opcionales:
+        - fecha_desde: Filtrar vehículos registrados desde esta fecha (formato: YYYY-MM-DD)
+        - fecha_hasta: Filtrar vehículos registrados hasta esta fecha (formato: YYYY-MM-DD)
+      tags:
+      - vehiculos
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+components:
+  schemas:
+    EstadoEnum:
+      enum:
+      - PENDIENTE
+      - EN_PROCESO
+      - COMPLETADO
+      - CANCELADO
+      type: string
+      description: |-
+        * `PENDIENTE` - Pendiente
+        * `EN_PROCESO` - En Proceso
+        * `COMPLETADO` - Completado
+        * `CANCELADO` - Cancelado
+    Mantenimiento:
+      type: object
+      description: Serializer completo para el modelo Mantenimiento
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        vehiculo_info:
+          allOf:
+          - $ref: '#/components/schemas/VehiculoList'
+          readOnly: true
+        taller_info:
+          allOf:
+          - $ref: '#/components/schemas/TallerMecanicoList'
+          readOnly: true
+        tipo:
+          $ref: '#/components/schemas/TipoE66Enum'
+        titulo:
+          type: string
+          description: Título o resumen del mantenimiento
+          maxLength: 200
+        descripcion:
+          type: string
+          description: Descripción detallada del mantenimiento realizado
+        estado:
+          $ref: '#/components/schemas/EstadoEnum'
+        fecha_programada:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha programada para el mantenimiento
+        fecha_realizado:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha en que se realizó el mantenimiento
+        kilometraje_realizado:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Kilometraje del vehículo al momento del mantenimiento
+        proximo_kilometraje:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: Kilometraje sugerido para próximo mantenimiento
+        costo:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Costo total del mantenimiento
+        piezas_reemplazadas:
+          type: string
+          nullable: true
+          description: Lista de piezas que fueron reemplazadas
+        notas_adicionales:
+          type: string
+          nullable: true
+        fecha_registro:
+          type: string
+          format: date-time
+          readOnly: true
+        fecha_actualizacion:
+          type: string
+          format: date-time
+          readOnly: true
+        dias_desde_mantenimiento:
+          type: string
+          readOnly: true
+        esta_vencido:
+          type: string
+          readOnly: true
+      required:
+      - descripcion
+      - dias_desde_mantenimiento
+      - esta_vencido
+      - fecha_actualizacion
+      - fecha_registro
+      - id
+      - kilometraje_realizado
+      - taller_info
+      - titulo
+      - vehiculo_info
+    MantenimientoCreate:
+      type: object
+      description: Serializer optimizado para crear mantenimientos
+      properties:
+        vehiculo:
+          type: integer
+          description: Vehículo al que se le realizó el mantenimiento
+        taller:
+          type: integer
+          nullable: true
+          description: Taller donde se realizó el mantenimiento
+        tipo:
+          $ref: '#/components/schemas/TipoE66Enum'
+        titulo:
+          type: string
+          description: Título o resumen del mantenimiento
+          maxLength: 200
+        descripcion:
+          type: string
+          description: Descripción detallada del mantenimiento realizado
+        estado:
+          $ref: '#/components/schemas/EstadoEnum'
+        fecha_programada:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha programada para el mantenimiento
+        fecha_realizado:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha en que se realizó el mantenimiento
+        kilometraje_realizado:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Kilometraje del vehículo al momento del mantenimiento
+        proximo_kilometraje:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: Kilometraje sugerido para próximo mantenimiento
+        costo:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Costo total del mantenimiento
+        piezas_reemplazadas:
+          type: string
+          nullable: true
+          description: Lista de piezas que fueron reemplazadas
+        notas_adicionales:
+          type: string
+          nullable: true
+      required:
+      - descripcion
+      - kilometraje_realizado
+      - titulo
+      - vehiculo
+    MantenimientoCreateRequest:
+      type: object
+      description: Serializer optimizado para crear mantenimientos
+      properties:
+        vehiculo:
+          type: integer
+          description: Vehículo al que se le realizó el mantenimiento
+        taller:
+          type: integer
+          nullable: true
+          description: Taller donde se realizó el mantenimiento
+        tipo:
+          $ref: '#/components/schemas/TipoE66Enum'
+        titulo:
+          type: string
+          minLength: 1
+          description: Título o resumen del mantenimiento
+          maxLength: 200
+        descripcion:
+          type: string
+          minLength: 1
+          description: Descripción detallada del mantenimiento realizado
+        estado:
+          $ref: '#/components/schemas/EstadoEnum'
+        fecha_programada:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha programada para el mantenimiento
+        fecha_realizado:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha en que se realizó el mantenimiento
+        kilometraje_realizado:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Kilometraje del vehículo al momento del mantenimiento
+        proximo_kilometraje:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: Kilometraje sugerido para próximo mantenimiento
+        costo:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Costo total del mantenimiento
+        piezas_reemplazadas:
+          type: string
+          nullable: true
+          description: Lista de piezas que fueron reemplazadas
+        notas_adicionales:
+          type: string
+          nullable: true
+      required:
+      - descripcion
+      - kilometraje_realizado
+      - titulo
+      - vehiculo
+    MantenimientoList:
+      type: object
+      description: Serializer simplificado para listar mantenimientos (más ligero)
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        vehiculo_placa:
+          type: string
+          readOnly: true
+        taller_nombre:
+          type: string
+          readOnly: true
+        tipo:
+          $ref: '#/components/schemas/TipoE66Enum'
+        titulo:
+          type: string
+          description: Título o resumen del mantenimiento
+          maxLength: 200
+        estado:
+          $ref: '#/components/schemas/EstadoEnum'
+        fecha_programada:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha programada para el mantenimiento
+        fecha_realizado:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha en que se realizó el mantenimiento
+        costo:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Costo total del mantenimiento
+      required:
+      - id
+      - taller_nombre
+      - titulo
+      - vehiculo_placa
+    MantenimientoRequest:
+      type: object
+      description: Serializer completo para el modelo Mantenimiento
+      properties:
+        vehiculo:
+          type: integer
+          writeOnly: true
+        taller:
+          type: integer
+          writeOnly: true
+          nullable: true
+        tipo:
+          $ref: '#/components/schemas/TipoE66Enum'
+        titulo:
+          type: string
+          minLength: 1
+          description: Título o resumen del mantenimiento
+          maxLength: 200
+        descripcion:
+          type: string
+          minLength: 1
+          description: Descripción detallada del mantenimiento realizado
+        estado:
+          $ref: '#/components/schemas/EstadoEnum'
+        fecha_programada:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha programada para el mantenimiento
+        fecha_realizado:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha en que se realizó el mantenimiento
+        kilometraje_realizado:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Kilometraje del vehículo al momento del mantenimiento
+        proximo_kilometraje:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: Kilometraje sugerido para próximo mantenimiento
+        costo:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Costo total del mantenimiento
+        piezas_reemplazadas:
+          type: string
+          nullable: true
+          description: Lista de piezas que fueron reemplazadas
+        notas_adicionales:
+          type: string
+          nullable: true
+      required:
+      - descripcion
+      - kilometraje_realizado
+      - titulo
+      - vehiculo
+    PaginatedMantenimientoListList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MantenimientoList'
+    PaginatedTallerMecanicoListList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TallerMecanicoList'
+    PaginatedVehiculoListList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/VehiculoList'
+    PatchedMantenimientoRequest:
+      type: object
+      description: Serializer completo para el modelo Mantenimiento
+      properties:
+        vehiculo:
+          type: integer
+          writeOnly: true
+        taller:
+          type: integer
+          writeOnly: true
+          nullable: true
+        tipo:
+          $ref: '#/components/schemas/TipoE66Enum'
+        titulo:
+          type: string
+          minLength: 1
+          description: Título o resumen del mantenimiento
+          maxLength: 200
+        descripcion:
+          type: string
+          minLength: 1
+          description: Descripción detallada del mantenimiento realizado
+        estado:
+          $ref: '#/components/schemas/EstadoEnum'
+        fecha_programada:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha programada para el mantenimiento
+        fecha_realizado:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha en que se realizó el mantenimiento
+        kilometraje_realizado:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Kilometraje del vehículo al momento del mantenimiento
+        proximo_kilometraje:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: Kilometraje sugerido para próximo mantenimiento
+        costo:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Costo total del mantenimiento
+        piezas_reemplazadas:
+          type: string
+          nullable: true
+          description: Lista de piezas que fueron reemplazadas
+        notas_adicionales:
+          type: string
+          nullable: true
+    PatchedTallerMecanicoRequest:
+      type: object
+      description: |-
+        Serializer para el modelo TallerMecanico
+        Incluye información de geolocalización
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          description: Nombre del taller mecánico
+          maxLength: 150
+        direccion:
+          type: string
+          minLength: 1
+          description: Dirección completa del taller
+          maxLength: 255
+        telefono:
+          type: string
+          nullable: true
+          maxLength: 15
+        email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        latitud:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          description: Latitud geográfica del taller
+        longitud:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          description: Longitud geográfica del taller
+        horario:
+          type: string
+          nullable: true
+          description: 'Horario de atención (ej: Lun-Vie 8:00-18:00)'
+          maxLength: 100
+        sitio_web:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        calificacion:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,2})?$
+          description: Calificación del taller (0.00 a 5.00)
+        servicios:
+          type: string
+          nullable: true
+          description: Descripción de servicios ofrecidos (separados por comas)
+        verificado:
+          type: boolean
+          description: Indica si el taller ha sido verificado por el sistema
+        activo:
+          type: boolean
+          description: Indica si el taller está activo
+    PatchedVehiculoRequest:
+      type: object
+      description: |-
+        Serializer para el modelo Vehiculo
+        Convierte instancias de Vehiculo a JSON y viceversa
+      properties:
+        placa:
+          type: string
+          minLength: 1
+          description: Placa o matrícula del vehículo
+          maxLength: 20
+        marca:
+          type: string
+          minLength: 1
+          description: 'Marca del vehículo (ej: Toyota, Ford, Honda)'
+          maxLength: 50
+        modelo:
+          type: string
+          minLength: 1
+          description: 'Modelo del vehículo (ej: Corolla, F-150)'
+          maxLength: 50
+        año:
+          type: integer
+          maximum: 2030
+          minimum: 1900
+          description: Año de fabricación
+        tipo:
+          $ref: '#/components/schemas/Tipo401Enum'
+        color:
+          type: string
+          nullable: true
+          maxLength: 30
+        kilometraje:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Kilometraje actual del vehículo
+        numero_serie:
+          type: string
+          nullable: true
+          description: Número de serie o VIN
+          maxLength: 50
+        propietario_nombre:
+          type: string
+          minLength: 1
+          description: Nombre del propietario
+          maxLength: 100
+        propietario_telefono:
+          type: string
+          nullable: true
+          maxLength: 15
+        propietario_email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        activo:
+          type: boolean
+          description: Indica si el vehículo está activo en el sistema
+        notas:
+          type: string
+          nullable: true
+          description: Notas adicionales sobre el vehículo
+    TallerMecanico:
+      type: object
+      description: |-
+        Serializer para el modelo TallerMecanico
+        Incluye información de geolocalización
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+          description: Nombre del taller mecánico
+          maxLength: 150
+        direccion:
+          type: string
+          description: Dirección completa del taller
+          maxLength: 255
+        telefono:
+          type: string
+          nullable: true
+          maxLength: 15
+        email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        latitud:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          description: Latitud geográfica del taller
+        longitud:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          description: Longitud geográfica del taller
+        coordenadas:
+          type: string
+          readOnly: true
+        horario:
+          type: string
+          nullable: true
+          description: 'Horario de atención (ej: Lun-Vie 8:00-18:00)'
+          maxLength: 100
+        sitio_web:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        calificacion:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,2})?$
+          description: Calificación del taller (0.00 a 5.00)
+        servicios:
+          type: string
+          nullable: true
+          description: Descripción de servicios ofrecidos (separados por comas)
+        verificado:
+          type: boolean
+          description: Indica si el taller ha sido verificado por el sistema
+        activo:
+          type: boolean
+          description: Indica si el taller está activo
+        fecha_registro:
+          type: string
+          format: date-time
+          readOnly: true
+        distancia:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Distancia en kilómetros (calculada dinámicamente)
+        total_mantenimientos:
+          type: string
+          readOnly: true
+      required:
+      - coordenadas
+      - direccion
+      - distancia
+      - fecha_registro
+      - id
+      - latitud
+      - longitud
+      - nombre
+      - total_mantenimientos
+    TallerMecanicoList:
+      type: object
+      description: Serializer simplificado para listar talleres (más ligero)
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+          description: Nombre del taller mecánico
+          maxLength: 150
+        direccion:
+          type: string
+          description: Dirección completa del taller
+          maxLength: 255
+        telefono:
+          type: string
+          nullable: true
+          maxLength: 15
+        calificacion:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,2})?$
+          description: Calificación del taller (0.00 a 5.00)
+        coordenadas:
+          type: string
+          readOnly: true
+        verificado:
+          type: boolean
+          description: Indica si el taller ha sido verificado por el sistema
+        distancia:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - coordenadas
+      - direccion
+      - distancia
+      - id
+      - nombre
+    TallerMecanicoListRequest:
+      type: object
+      description: Serializer simplificado para listar talleres (más ligero)
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          description: Nombre del taller mecánico
+          maxLength: 150
+        direccion:
+          type: string
+          minLength: 1
+          description: Dirección completa del taller
+          maxLength: 255
+        telefono:
+          type: string
+          nullable: true
+          maxLength: 15
+        calificacion:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,2})?$
+          description: Calificación del taller (0.00 a 5.00)
+        verificado:
+          type: boolean
+          description: Indica si el taller ha sido verificado por el sistema
+      required:
+      - direccion
+      - nombre
+    TallerMecanicoRequest:
+      type: object
+      description: |-
+        Serializer para el modelo TallerMecanico
+        Incluye información de geolocalización
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          description: Nombre del taller mecánico
+          maxLength: 150
+        direccion:
+          type: string
+          minLength: 1
+          description: Dirección completa del taller
+          maxLength: 255
+        telefono:
+          type: string
+          nullable: true
+          maxLength: 15
+        email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        latitud:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          description: Latitud geográfica del taller
+        longitud:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          description: Longitud geográfica del taller
+        horario:
+          type: string
+          nullable: true
+          description: 'Horario de atención (ej: Lun-Vie 8:00-18:00)'
+          maxLength: 100
+        sitio_web:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        calificacion:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,2})?$
+          description: Calificación del taller (0.00 a 5.00)
+        servicios:
+          type: string
+          nullable: true
+          description: Descripción de servicios ofrecidos (separados por comas)
+        verificado:
+          type: boolean
+          description: Indica si el taller ha sido verificado por el sistema
+        activo:
+          type: boolean
+          description: Indica si el taller está activo
+      required:
+      - direccion
+      - latitud
+      - longitud
+      - nombre
+    Tipo401Enum:
+      enum:
+      - AUTO
+      - MOTO
+      - CAMIONETA
+      - CAMION
+      - VAN
+      type: string
+      description: |-
+        * `AUTO` - Automóvil
+        * `MOTO` - Motocicleta
+        * `CAMIONETA` - Camioneta
+        * `CAMION` - Camión
+        * `VAN` - Van
+    TipoE66Enum:
+      enum:
+      - PREVENTIVO
+      - CORRECTIVO
+      - REVISION
+      - REPARACION
+      type: string
+      description: |-
+        * `PREVENTIVO` - Mantenimiento Preventivo
+        * `CORRECTIVO` - Mantenimiento Correctivo
+        * `REVISION` - Revisión General
+        * `REPARACION` - Reparación
+    Vehiculo:
+      type: object
+      description: |-
+        Serializer para el modelo Vehiculo
+        Convierte instancias de Vehiculo a JSON y viceversa
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        placa:
+          type: string
+          description: Placa o matrícula del vehículo
+          maxLength: 20
+        marca:
+          type: string
+          description: 'Marca del vehículo (ej: Toyota, Ford, Honda)'
+          maxLength: 50
+        modelo:
+          type: string
+          description: 'Modelo del vehículo (ej: Corolla, F-150)'
+          maxLength: 50
+        año:
+          type: integer
+          maximum: 2030
+          minimum: 1900
+          description: Año de fabricación
+        tipo:
+          $ref: '#/components/schemas/Tipo401Enum'
+        color:
+          type: string
+          nullable: true
+          maxLength: 30
+        kilometraje:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Kilometraje actual del vehículo
+        numero_serie:
+          type: string
+          nullable: true
+          description: Número de serie o VIN
+          maxLength: 50
+        propietario_nombre:
+          type: string
+          description: Nombre del propietario
+          maxLength: 100
+        propietario_telefono:
+          type: string
+          nullable: true
+          maxLength: 15
+        propietario_email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        activo:
+          type: boolean
+          description: Indica si el vehículo está activo en el sistema
+        notas:
+          type: string
+          nullable: true
+          description: Notas adicionales sobre el vehículo
+        fecha_registro:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Fecha de registro en el sistema
+        nombre_completo:
+          type: string
+          readOnly: true
+        total_mantenimientos:
+          type: string
+          readOnly: true
+        ultimo_mantenimiento:
+          type: string
+          readOnly: true
+      required:
+      - año
+      - fecha_registro
+      - id
+      - marca
+      - modelo
+      - nombre_completo
+      - placa
+      - propietario_nombre
+      - total_mantenimientos
+      - ultimo_mantenimiento
+    VehiculoList:
+      type: object
+      description: Serializer simplificado para listar vehículos (más ligero)
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        placa:
+          type: string
+          description: Placa o matrícula del vehículo
+          maxLength: 20
+        marca:
+          type: string
+          description: 'Marca del vehículo (ej: Toyota, Ford, Honda)'
+          maxLength: 50
+        modelo:
+          type: string
+          description: 'Modelo del vehículo (ej: Corolla, F-150)'
+          maxLength: 50
+        año:
+          type: integer
+          maximum: 2030
+          minimum: 1900
+          description: Año de fabricación
+        tipo:
+          $ref: '#/components/schemas/Tipo401Enum'
+        kilometraje:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Kilometraje actual del vehículo
+        nombre_completo:
+          type: string
+          readOnly: true
+        activo:
+          type: boolean
+          description: Indica si el vehículo está activo en el sistema
+      required:
+      - año
+      - id
+      - marca
+      - modelo
+      - nombre_completo
+      - placa
+    VehiculoListRequest:
+      type: object
+      description: Serializer simplificado para listar vehículos (más ligero)
+      properties:
+        placa:
+          type: string
+          minLength: 1
+          description: Placa o matrícula del vehículo
+          maxLength: 20
+        marca:
+          type: string
+          minLength: 1
+          description: 'Marca del vehículo (ej: Toyota, Ford, Honda)'
+          maxLength: 50
+        modelo:
+          type: string
+          minLength: 1
+          description: 'Modelo del vehículo (ej: Corolla, F-150)'
+          maxLength: 50
+        año:
+          type: integer
+          maximum: 2030
+          minimum: 1900
+          description: Año de fabricación
+        tipo:
+          $ref: '#/components/schemas/Tipo401Enum'
+        kilometraje:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Kilometraje actual del vehículo
+        activo:
+          type: boolean
+          description: Indica si el vehículo está activo en el sistema
+      required:
+      - año
+      - marca
+      - modelo
+      - placa
+    VehiculoRequest:
+      type: object
+      description: |-
+        Serializer para el modelo Vehiculo
+        Convierte instancias de Vehiculo a JSON y viceversa
+      properties:
+        placa:
+          type: string
+          minLength: 1
+          description: Placa o matrícula del vehículo
+          maxLength: 20
+        marca:
+          type: string
+          minLength: 1
+          description: 'Marca del vehículo (ej: Toyota, Ford, Honda)'
+          maxLength: 50
+        modelo:
+          type: string
+          minLength: 1
+          description: 'Modelo del vehículo (ej: Corolla, F-150)'
+          maxLength: 50
+        año:
+          type: integer
+          maximum: 2030
+          minimum: 1900
+          description: Año de fabricación
+        tipo:
+          $ref: '#/components/schemas/Tipo401Enum'
+        color:
+          type: string
+          nullable: true
+          maxLength: 30
+        kilometraje:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Kilometraje actual del vehículo
+        numero_serie:
+          type: string
+          nullable: true
+          description: Número de serie o VIN
+          maxLength: 50
+        propietario_nombre:
+          type: string
+          minLength: 1
+          description: Nombre del propietario
+          maxLength: 100
+        propietario_telefono:
+          type: string
+          nullable: true
+          maxLength: 15
+        propietario_email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        activo:
+          type: boolean
+          description: Indica si el vehículo está activo en el sistema
+        notas:
+          type: string
+          nullable: true
+          description: Notas adicionales sobre el vehículo
+      required:
+      - año
+      - marca
+      - modelo
+      - placa
+      - propietario_nombre
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+servers:
+- url: https://tu-proyecto.vercel.app
+  description: Servidor de Producción (Vercel)
+- url: http://127.0.0.1:8000
+  description: Servidor de Desarrollo Local
+- url: http://localhost:8000
+  description: Servidor Local Alternativo
+tags:
+- name: vehiculo
+  description: Operaciones CRUD para vehículos, estadísticas y actualización de kilometraje
+- name: taller
+  description: Gestión de talleres mecánicos con búsqueda por ubicación
+- name: mantenimiento
+  description: Control de mantenimientos preventivos y correctivos
+- name: aws-maps
+  description: Integración con AWS Location Service para mapas y geocodificación
+externalDocs:
+  description: Documentación adicional del proyecto
+  url: https://github.com/tu-usuario/tu-proyecto

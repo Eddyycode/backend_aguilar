@@ -13,6 +13,10 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=lambda v: [s.strip() for s in v.split(',')])
 
+# Agregar dominios de Vercel
+if not DEBUG:
+    ALLOWED_HOSTS.extend(['.vercel.app', '.now.sh'])
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -174,20 +178,61 @@ LOGGING = {
 # Configuración de drf-spectacular
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API de Mantenimiento Vehicular',
-    'DESCRIPTION': 'API REST para gestión de vehículos, mantenimientos y talleres mecánicos con integración AWS Location Service',
+    'DESCRIPTION': """
+    API REST completa para gestión de vehículos, mantenimientos y talleres mecánicos.
+
+    ## Características principales:
+
+    * **Gestión de Vehículos**: CRUD completo con filtros avanzados
+    * **Talleres Mecánicos**: Búsqueda por ubicación con geolocalización
+    * **Mantenimientos**: Control de preventivos y correctivos con historial
+    * **AWS Location Service**: Integración para mapas y geocodificación
+    * **Filtros de Fecha**: Todos los endpoints de estadísticas soportan filtros por rango de fechas
+
+    ## Filtros de fecha disponibles:
+
+    Los siguientes endpoints aceptan parámetros `fecha_desde` y `fecha_hasta` (formato: YYYY-MM-DD):
+
+    * `/api/mantenimientos/estadisticas/` - Estadísticas filtradas por fecha
+    * `/api/vehiculos/estadisticas/` - Estadísticas de vehículos por fecha de registro
+    * `/api/vehiculos/{id}/mantenimientos/` - Mantenimientos de un vehículo
+    * `/api/talleres/{id}/mantenimientos/` - Mantenimientos de un taller
+
+    ## Base URL:
+    * Desarrollo: `http://127.0.0.1:8000/api/`
+    * Producción: (configurar según tu dominio)
+    """,
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'CONTACT': {
-        'name': 'Tu Nombre',
-        'email': 'tu-email@example.com'
+        'name': 'Equipo de Desarrollo',
+        'email': 'dev@mantenimiento-vehicular.com'
     },
     'LICENSE': {
         'name': 'MIT License',
     },
     'TAGS': [
-        {'name': 'Vehículos', 'description': 'Operaciones relacionadas con vehículos'},
-        {'name': 'Talleres', 'description': 'Operaciones relacionadas con talleres mecánicos'},
-        {'name': 'Mantenimientos', 'description': 'Operaciones relacionadas con mantenimientos'},
-        {'name': 'AWS Maps', 'description': 'Integración con AWS Location Service'},
+        {'name': 'vehiculo', 'description': 'Operaciones CRUD para vehículos, estadísticas y actualización de kilometraje'},
+        {'name': 'taller', 'description': 'Gestión de talleres mecánicos con búsqueda por ubicación'},
+        {'name': 'mantenimiento', 'description': 'Control de mantenimientos preventivos y correctivos'},
+        {'name': 'aws-maps', 'description': 'Integración con AWS Location Service para mapas y geocodificación'},
     ],
+    # Configuración para mejor visualización en ReDoc
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/',
+    'SERVERS': [
+        {'url': config('API_URL', default='https://tu-proyecto.vercel.app'), 'description': 'Servidor de Producción (Vercel)'},
+        {'url': 'http://127.0.0.1:8000', 'description': 'Servidor de Desarrollo Local'},
+        {'url': 'http://localhost:8000', 'description': 'Servidor Local Alternativo'},
+    ],
+    'EXTERNAL_DOCS': {
+        'description': 'Documentación adicional del proyecto',
+        'url': 'https://github.com/tu-usuario/tu-proyecto'
+    },
+    # Mejorar la generación de ejemplos
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+    },
 }

@@ -256,10 +256,7 @@ class MantenimientoSerializer(serializers.ModelSerializer):
     
     # Campos calculados
     dias_desde_mantenimiento = serializers.SerializerMethodField()
-    esta_vencido = serializers.BooleanField(
-        source='esta_vencido',
-        read_only=True
-    )
+    esta_vencido = serializers.SerializerMethodField()
     
     class Meta:
         model = Mantenimiento
@@ -294,6 +291,10 @@ class MantenimientoSerializer(serializers.ModelSerializer):
             delta = timezone.now().date() - obj.fecha_realizado
             return delta.days
         return None
+
+    def get_esta_vencido(self, obj):
+        """Verifica si el mantenimiento está vencido"""
+        return obj.esta_vencido()
     
     def validate_costo(self, value):
         """Validación del costo"""
