@@ -5,6 +5,7 @@ from decouple import config
 from typing import List, Dict, Tuple, Optional
 
 import logging
+from .cache_service import cache_service, CacheService
 
 logger = logging.getLogger(__name__)
 
