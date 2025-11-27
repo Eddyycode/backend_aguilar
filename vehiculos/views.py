@@ -785,3 +785,116 @@ class CalcularRutaAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+class BuscarRefaccionariasAPIView(APIView):
+    """
+    API View para buscar refaccionarias usando AWS Location Service
+
+    GET /api/aws-maps/buscar-refaccionarias/?latitud=17.9892&longitud=-92.9475&radio=10
+    """
+
+    def get(self, request):
+        latitud = request.query_params.get('latitud')
+        longitud = request.query_params.get('longitud')
+        radio = request.query_params.get('radio', 10)
+        max_resultados = request.query_params.get('max_resultados', 20)
+
+        if not latitud or not longitud:
+            return Response(
+                {'error': 'Los parámetros "latitud" y "longitud" son requeridos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            lat = float(latitud)
+            lon = float(longitud)
+            rad = float(radio)
+            max_res = int(max_resultados)
+
+            # Buscar refaccionarias
+            refaccionarias = aws_location_service.buscar_refaccionarias(
+                latitud=lat,
+                longitud=lon,
+                radio_km=rad,
+                max_resultados=max_res
+            )
+
+            return Response({
+                'ubicacion_busqueda': {
+                    'latitud': lat,
+                    'longitud': lon,
+                    'radio_km': rad
+                },
+                'total': len(refaccionarias),
+                'refaccionarias': refaccionarias
+            })
+
+        except ValueError:
+            return Response(
+                {'error': 'Coordenadas o radio inválidos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error al buscar refaccionarias: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class MapaEstaticoAPIView(APIView):
+    """
+    API View para generar URL de mapa estático
+
+    GET /api/aws-maps/mapa-estatico/?latitud=17.9892&longitud=-92.9475&zoom=14&ancho=600&alto=400
+    """
+
+    def get(self, request):
+        latitud = request.query_params.get('latitud')
+        longitud = request.query_params.get('longitud')
+        zoom = request.query_params.get('zoom', 14)
+        ancho = request.query_params.get('ancho', 600)
+        alto = request.query_params.get('alto', 400)
+
+        if not latitud or not longitud:
+            return Response(
+                {'error': 'Los parámetros "latitud" y "longitud" son requeridos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            lat = float(latitud)
+            lon = float(longitud)
+            z = int(zoom)
+            w = int(ancho)
+            h = int(alto)
+
+            # Generar URL del mapa estático
+            url_mapa = aws_location_service.obtener_url_mapa_estatico(
+                latitud=lat,
+                longitud=lon,
+                zoom=z,
+                ancho=w,
+                alto=h
+            )
+
+            return Response({
+                'url': url_mapa,
+                'parametros': {
+                    'latitud': lat,
+                    'longitud': lon,
+                    'zoom': z,
+                    'dimensiones': f'{w}x{h}'
+                }
+            })
+
+        except ValueError:
+            return Response(
+                {'error': 'Parámetros inválidos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error al generar URL del mapa: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+

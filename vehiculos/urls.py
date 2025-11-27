@@ -12,6 +12,8 @@ from .views import (
     GeocodificarInversoAPIView,
     ValidarConfiguracionAWSAPIView,
     CalcularRutaAPIView,
+    BuscarRefaccionariasAPIView,
+    MapaEstaticoAPIView,
 )
 
 # Crear el router
@@ -29,9 +31,11 @@ urlpatterns = [
     # Endpoints de AWS Maps
     path('aws-maps/buscar-lugares/', BuscarLugaresAPIView.as_view(), name='aws-buscar-lugares'),
     path('aws-maps/buscar-talleres/', BuscarTalleresAWSAPIView.as_view(), name='aws-buscar-talleres'),
+    path('aws-maps/buscar-refaccionarias/', BuscarRefaccionariasAPIView.as_view(), name='aws-buscar-refaccionarias'),
     path('aws-maps/geocodificar/', GeocodificarAPIView.as_view(), name='aws-geocodificar'),
     path('aws-maps/geocodificar-inverso/', GeocodificarInversoAPIView.as_view(), name='aws-geocodificar-inverso'),
     path('aws-maps/validar-configuracion/', ValidarConfiguracionAWSAPIView.as_view(), name='aws-validar-config'),
     path('aws-maps/calcular-ruta/', CalcularRutaAPIView.as_view(), name='aws-calcular-ruta'),
+    path('aws-maps/mapa-estatico/', MapaEstaticoAPIView.as_view(), name='aws-mapa-estatico'),
 ]
 
