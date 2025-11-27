@@ -165,3 +165,4 @@ vercel --prod --force
 ---
 
 **¿Necesitas ayuda?** Pregúntame cualquier cosa sobre el deployment.
+# Forzar redespliegue jueves, 27 de noviembre de 2025, 09:46:06 CST
